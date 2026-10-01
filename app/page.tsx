@@ -1474,19 +1474,31 @@ const handleLogin = async () => {
     return;
   }
 
-  // 가입 승인 상태 확인
+  if (!data.user) {
+    setErrorMessage(
+      "로그인에 실패했습니다."
+    );
+    return;
+  }
+
+  // profiles에서 승인 상태 확인
   const { data: profile, error: profileError } =
     await supabase
       .from("profiles")
-      .select("status")
+      .select("status, role")
       .eq("id", data.user.id)
       .single();
 
   if (profileError) {
+    console.error(
+      "사용자 상태 확인 오류:",
+      profileError
+    );
+
     await supabase.auth.signOut();
 
     setErrorMessage(
-      "회원 정보를 확인할 수 없습니다."
+      "사용자 승인 상태를 확인할 수 없습니다."
     );
 
     return;
@@ -1496,18 +1508,27 @@ const handleLogin = async () => {
   if (profile.status !== "approved") {
     await supabase.auth.signOut();
 
+    setUser(null);
+    setSavedWords([]);
+    setWordComments([]);
+
     setErrorMessage(
-      "아직 관리자 승인이 완료되지 않았습니다."
+      "아직 관리자 승인이 완료되지 않았습니다. 승인 후 로그인할 수 있습니다."
     );
 
     return;
   }
 
-  // 승인된 사용자만 로그인 완료
+  // 승인된 사용자만 정상 로그인
+  setUser(data.user);
+
+  await loadWords(data.user.id);
+
   setAuthMessage(
     "로그인되었습니다."
   );
 };
+
 
   // =========================
   // 회원가입
@@ -1515,11 +1536,10 @@ const handleSignup = async () => {
   setAuthMessage("");
   setErrorMessage("");
 
-  const { data, error } =
-    await supabase.auth.signUp({
-      email,
-      password,
-    });
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+  });
 
   if (error) {
     setErrorMessage(error.message);
@@ -1527,27 +1547,27 @@ const handleSignup = async () => {
   }
 
   if (!data.user) {
-    setErrorMessage(
-      "회원가입에 실패했습니다."
-    );
+    setErrorMessage("회원가입에 실패했습니다.");
     return;
   }
 
-  const { error: profileError } =
-    await supabase
-      .from("profiles")
-      .insert({
-        id: data.user.id,
-        email: email,
-        status: "pending",
-        role: "user",
-      });
+  // 회원가입한 사용자를 pending 상태로 저장
+  const { error: profileError } = await supabase
+    .from("profiles")
+    .insert({
+      id: data.user.id,
+      email: email,
+      status: "pending",
+      role: "user",
+    });
 
   if (profileError) {
     console.error(
       "프로필 생성 오류:",
       profileError
     );
+
+    await supabase.auth.signOut();
 
     setErrorMessage(
       "회원가입 정보 저장에 실패했습니다: " +
@@ -1557,14 +1577,20 @@ const handleSignup = async () => {
     return;
   }
 
-  // Supabase가 회원가입과 동시에
-  // 로그인 세션을 만들어준 경우 바로 로그아웃
+  // Supabase가 자동으로 로그인시킨 경우 즉시 로그아웃
   await supabase.auth.signOut();
 
+  // 화면에서도 로그인 상태 제거
+  setUser(null);
+  setSavedWords([]);
+  setWordComments([]);
+
+  // 회원가입 완료 안내
   setAuthMessage(
-    "회원가입 신청이 완료되었습니다. 관리자 승인 후 로그인할 수 있습니다."
+    "회원가입 신청이 완료되었습니다. 관리자 승인 후 사용 가능합니다."
   );
 };
+
 
   // =========================
   // 로그아웃

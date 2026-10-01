@@ -127,16 +127,18 @@ export default function AdminPage() {
   // =========================
   // 사용자 승인
   // =========================
-const approveUser = async (userId: string) => {
+  const approveUser = async (userId: string) => {
   setErrorMessage("");
   setMessage("");
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("profiles")
     .update({
       status: "approved",
     })
-    .eq("id", userId);
+    .eq("id", userId)
+    .select("id, email, role, status")
+    .single();
 
   if (error) {
     console.error(
@@ -151,6 +153,11 @@ const approveUser = async (userId: string) => {
 
     return;
   }
+
+  console.log(
+    "승인된 사용자:",
+    data
+  );
 
   setUsers((prev) =>
     prev.map((user) =>

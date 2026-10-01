@@ -1511,13 +1511,9 @@ const handleLogin = async () => {
 
   // =========================
   // 회원가입
- const handleSignup = async () => {
-  console.log("회원가입 버튼 클릭");
-
+const handleSignup = async () => {
   setAuthMessage("");
   setErrorMessage("");
-
-  console.log("이메일:", email);
 
   const { data, error } =
     await supabase.auth.signUp({
@@ -1525,48 +1521,45 @@ const handleLogin = async () => {
       password,
     });
 
-  console.log("회원가입 결과:", {
-    data,
-    error,
-  });
-
   if (error) {
+    setErrorMessage(error.message);
+    return;
+  }
+
+  if (!data.user) {
+    setErrorMessage(
+      "회원가입에 실패했습니다."
+    );
+    return;
+  }
+
+  const { error: profileError } =
+    await supabase
+      .from("profiles")
+      .insert({
+        id: data.user.id,
+        email: email,
+        status: "pending",
+        role: "user",
+      });
+
+  if (profileError) {
     console.error(
-      "회원가입 오류:",
-      error
+      "프로필 생성 오류:",
+      profileError
     );
 
     setErrorMessage(
-      error.message
+      "회원가입 정보 저장에 실패했습니다: " +
+        profileError.message
     );
 
     return;
   }
 
-  if (data.user) {
-    const { error: profileError } =
-      await supabase
-        .from("profiles")
-        .insert({
-          id: data.user.id,
-          email: email,
-          status: "pending",
-          role: "user",
-        });
-
-    if (profileError) {
-      console.error(
-        "프로필 생성 오류:",
-        profileError
-      );
-
-      setErrorMessage(
-        profileError.message
-      );
-
-      return;
-    }
-  }
+  // Supabase가 회원가입과 동시에
+  // 로그인 세션을 만들어준 경우 바로 로그아웃
+  await supabase.auth.signOut();
 
   setAuthMessage(
     "회원가입 신청이 완료되었습니다. 관리자 승인 후 로그인할 수 있습니다."

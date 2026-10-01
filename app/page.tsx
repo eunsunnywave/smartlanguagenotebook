@@ -1213,89 +1213,104 @@ export default function Home() {
   // =========================
   // 단어 삭제
   // =========================
-  const toggleMeaningVisibility = (wordId: string) => {
+// =========================
+// 단어 삭제 / 뜻 보기
+// =========================
+
+// 이 useState는 deleteWord 함수 밖,
+// 다른 useState들과 같은 컴포넌트 최상단에 있어야 합니다.
+//
+// const [visibleMeaningIds, setVisibleMeaningIds] =
+//   useState<string[]>([]);
+
+const toggleMeaningVisibility = (
+  wordId: string
+) => {
   setVisibleMeaningIds((prev) => {
     if (prev.includes(wordId)) {
-      return prev.filter((id) => id !== wordId);
+      return prev.filter(
+        (id) => id !== wordId
+      );
     }
 
     return [...prev, wordId];
   });
 };
-  const deleteWord = async (
-    wordId: string
-  ) => {
-    if (!user) {
-      setErrorMessage(
-        "로그인이 필요합니다."
-      );
-      return;
-    }
 
-    const [visibleMeaningIds, setVisibleMeaningIds] =
-  useState<string[]>([]);
+const deleteWord = async (
+  wordId: string
+) => {
+  if (!user) {
+    setErrorMessage(
+      "로그인이 필요합니다."
+    );
+    return;
+  }
 
-const toggleMeaningVisibility = (wordId: string) => {
+  const confirmed = window.confirm(
+    "이 단어를 삭제하시겠습니까?"
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  setErrorMessage("");
+
+  const { error } =
+    await supabase
+      .from("words")
+      .delete()
+      .eq("id", wordId)
+      .eq("user_id", user.id);
+
+  if (error) {
+    console.error(
+      "단어 삭제 오류:",
+      error
+    );
+
+    setErrorMessage(
+      "단어 삭제에 실패했습니다: " +
+        error.message
+    );
+
+    return;
+  }
+
+  // 화면에서도 바로 삭제
+  setSavedWords((prev) =>
+    prev.filter(
+      (word) => word.id !== wordId
+    )
+  );
+
+  // 해당 단어의 코멘트도 화면에서 제거
+  setWordComments((prev) =>
+    prev.filter(
+      (comment) =>
+        comment.word_id !== wordId
+    )
+  );
+
+  // 뜻 표시 상태에서도 제거
   setVisibleMeaningIds((prev) =>
-    prev.includes(wordId)
-      ? prev.filter((id) => id !== wordId)
-      : [...prev, wordId]
+    prev.filter(
+      (id) => id !== wordId
+    )
+  );
+
+  // 수정 중이던 단어였다면 수정 상태 종료
+  if (
+    editingWordId === wordId
+  ) {
+    cancelEditWord();
+  }
+
+  setMessage(
+    "단어가 삭제되었습니다."
   );
 };
- 
-
-    const confirmed =
-      window.confirm(
-        "이 단어를 삭제하시겠습니까?"
-      );
-
-    if (!confirmed) {
-      return;
-    }
-
-    setErrorMessage("");
-
-    const { error } =
-      await supabase
-        .from("words")
-        .delete()
-        .eq("id", wordId)
-        .eq("user_id", user.id);
-
-    if (error) {
-      console.error(
-        "단어 삭제 오류:",
-        error
-      );
-
-      setErrorMessage(
-        "단어 삭제에 실패했습니다: " +
-          error.message
-      );
-
-      return;
-    }
-
-    setSavedWords((prev) =>
-      prev.filter(
-        (word) =>
-          word.id !== wordId
-      )
-    );
-
-    setWordComments((prev) =>
-      prev.filter(
-        (comment) =>
-          comment.word_id !== wordId
-      )
-    );
-
-    if (
-      editingWordId === wordId
-    ) {
-      cancelEditWord();
-    }
-  };
 
   // =========================
   // 단어 음성 재생

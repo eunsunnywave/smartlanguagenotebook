@@ -1511,37 +1511,59 @@ const handleLogin = async () => {
 
   // =========================
   // 회원가입
-  // =========================
-  const handleSignup = async () => {
-    setAuthMessage("");
-    setErrorMessage("");
+ const handleSignup = async () => {
+  console.log("회원가입 버튼 클릭");
 
-   const handleSignup = async () => {
   setAuthMessage("");
   setErrorMessage("");
 
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
+  console.log("이메일:", email);
+
+  const { data, error } =
+    await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+  console.log("회원가입 결과:", {
+    data,
+    error,
   });
-  
 
   if (error) {
-    setErrorMessage(error.message);
+    console.error(
+      "회원가입 오류:",
+      error
+    );
+
+    setErrorMessage(
+      error.message
+    );
+
     return;
   }
 
   if (data.user) {
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .insert({
-        id: data.user.id,
-        email: email,
-        status: "pending",
-      });
+    const { error: profileError } =
+      await supabase
+        .from("profiles")
+        .insert({
+          id: data.user.id,
+          email: email,
+          status: "pending",
+          role: "user",
+        });
 
     if (profileError) {
-      setErrorMessage(profileError.message);
+      console.error(
+        "프로필 생성 오류:",
+        profileError
+      );
+
+      setErrorMessage(
+        profileError.message
+      );
+
       return;
     }
   }
@@ -1550,8 +1572,6 @@ const handleLogin = async () => {
     "회원가입 신청이 완료되었습니다. 관리자 승인 후 로그인할 수 있습니다."
   );
 };
-
-  };
 
   // =========================
   // 로그아웃

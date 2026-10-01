@@ -127,48 +127,47 @@ export default function AdminPage() {
   // =========================
   // 사용자 승인
   // =========================
-  const approveUser = async (
-    userId: string
-  ) => {
-    setErrorMessage("");
-    setMessage("");
+const approveUser = async (userId: string) => {
+  setErrorMessage("");
+  setMessage("");
 
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        status: "approved",
-      })
-      .eq("id", userId);
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      status: "approved",
+    })
+    .eq("id", userId);
 
-    if (error) {
-      console.error(
-        "사용자 승인 오류:",
-        error
-      );
-
-      setErrorMessage(
-        "사용자 승인에 실패했습니다: " +
-          error.message
-      );
-
-      return;
-    }
-
-    setUsers((prev) =>
-      prev.map((user) =>
-        user.id === userId
-          ? {
-              ...user,
-              status: "approved",
-            }
-          : user
-      )
+  if (error) {
+    console.error(
+      "사용자 승인 오류:",
+      error
     );
 
-    setMessage(
-      "사용자가 승인되었습니다."
+    setErrorMessage(
+      "사용자 승인에 실패했습니다: " +
+        error.message
     );
-  };
+
+    return;
+  }
+
+  setUsers((prev) =>
+    prev.map((user) =>
+      user.id === userId
+        ? {
+            ...user,
+            status: "approved",
+          }
+        : user
+    )
+  );
+
+  setMessage(
+    "사용자가 승인되었습니다."
+  );
+};
+
 
   // =========================
   // 단어 불러오기
@@ -575,76 +574,75 @@ export default function AdminPage() {
       >
         <h2>사용자 관리</h2>
 
-        {users.map((user) => (
-          <div
-            key={user.id}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              marginBottom: "10px",
-              flexWrap: "wrap",
-            }}
-          >
-            {/* 사용자 선택 */}
-            <button
-              onClick={() =>
-                setSelectedUserId(
-                  user.id
-                )
-              }
-              style={{
-                padding: "10px 14px",
-                cursor: "pointer",
-                fontWeight:
-                  selectedUserId ===
-                  user.id
-                    ? "bold"
-                    : "normal",
-              }}
-            >
-              {user.email ||
-                "이메일 없음"}
-            </button>
+     {users.map((user) => (
+  <div
+    key={user.id}
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "8px",
+      marginBottom: "8px",
+      flexWrap: "wrap",
+    }}
+  >
+    <button
+      onClick={() =>
+        setSelectedUserId(user.id)
+      }
+      style={{
+        padding: "10px 14px",
+        cursor: "pointer",
+        fontWeight:
+          selectedUserId === user.id
+            ? "bold"
+            : "normal",
+      }}
+    >
+      {user.email || "이메일 없음"}
+    </button>
 
-            {/* 승인 상태 */}
-            <span
-              style={{
-                color:
-                  user.status ===
-                  "approved"
-                    ? "green"
-                    : "#d97706",
-                fontWeight: "bold",
-              }}
-            >
-              {user.status ===
-              "approved"
-                ? "승인됨"
-                : "승인 대기"}
-            </span>
+    <span
+      style={{
+        padding: "6px 10px",
+        borderRadius: "6px",
+        background:
+          user.status === "approved"
+            ? "#dcfce7"
+            : "#fef3c7",
+        color:
+          user.status === "approved"
+            ? "#166534"
+            : "#92400e",
+        fontSize: "13px",
+      }}
+    >
+      {user.status === "approved"
+        ? "승인됨"
+        : "승인 대기"}
+    </span>
 
-            {/* 승인 버튼 */}
-            {user.status !==
-              "approved" && (
-              <button
-                onClick={() =>
-                  approveUser(
-                    user.id
-                  )
-                }
-                style={{
-                  padding:
-                    "8px 12px",
-                  cursor:
-                    "pointer",
-                }}
-              >
-                승인
-              </button>
-            )}
-          </div>
-        ))}
+    {user.status !== "approved" && (
+      <button
+        onClick={() =>
+          approveUser(user.id)
+        }
+        style={{
+          padding: "7px 12px",
+          cursor: "pointer",
+          background: "#2563eb",
+          color: "white",
+          border: "none",
+          borderRadius: "6px",
+        }}
+      >
+        승인
+      </button>
+    )}
+  </div>
+))}
+
+
+      
 
         {users.length === 0 && (
           <p>

@@ -1456,34 +1456,58 @@ const toggleMeaningVisibility = (wordId: string) => {
     setIsAutoPlaying(false);
     setPlayingWordId(null);
   };
+// =========================
+// 로그인
+// =========================
+const handleLogin = async () => {
+  setAuthMessage("");
+  setErrorMessage("");
 
-  // =========================
-  // 로그인
-  // =========================
-  const handleLogin = async () => {
-    setAuthMessage("");
-    setErrorMessage("");
+  const { data, error } =
+    await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-    const { error } =
-      await supabase.auth.signInWithPassword(
-        {
-          email,
-          password,
-        }
-      );
+  if (error) {
+    setErrorMessage(error.message);
+    return;
+  }
 
-    if (error) {
-      setErrorMessage(
-        error.message
-      );
+  // 가입 승인 상태 확인
+  const { data: profile, error: profileError } =
+    await supabase
+      .from("profiles")
+      .select("status")
+      .eq("id", data.user.id)
+      .single();
 
-      return;
-    }
+  if (profileError) {
+    await supabase.auth.signOut();
 
-    setAuthMessage(
-      "로그인되었습니다."
+    setErrorMessage(
+      "회원 정보를 확인할 수 없습니다."
     );
-  };
+
+    return;
+  }
+
+  // 관리자 승인 전이면 로그인 차단
+  if (profile.status !== "approved") {
+    await supabase.auth.signOut();
+
+    setErrorMessage(
+      "아직 관리자 승인이 완료되지 않았습니다."
+    );
+
+    return;
+  }
+
+  // 승인된 사용자만 로그인 완료
+  setAuthMessage(
+    "로그인되었습니다."
+  );
+};
 
   // =========================
   // 회원가입
@@ -1492,23 +1516,41 @@ const toggleMeaningVisibility = (wordId: string) => {
     setAuthMessage("");
     setErrorMessage("");
 
-    const { error } =
-      await supabase.auth.signUp({
-        email,
-        password,
+   const handleSignup = async () => {
+  setAuthMessage("");
+  setErrorMessage("");
+
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+  });
+  
+
+  if (error) {
+    setErrorMessage(error.message);
+    return;
+  }
+
+  if (data.user) {
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .insert({
+        id: data.user.id,
+        email: email,
+        status: "pending",
       });
 
-    if (error) {
-      setErrorMessage(
-        error.message
-      );
-
+    if (profileError) {
+      setErrorMessage(profileError.message);
       return;
     }
+  }
 
-    setAuthMessage(
-      "회원가입이 완료되었습니다. 이메일 인증이 필요한 경우 이메일을 확인해 주세요."
-    );
+  setAuthMessage(
+    "회원가입 신청이 완료되었습니다. 관리자 승인 후 로그인할 수 있습니다."
+  );
+};
+
   };
 
   // =========================

@@ -1566,6 +1566,29 @@ const toggleMeaningVisibility = (wordId: string) => {
               : "회원가입"}
           </h2>
 
+          {authMessage && (
+            <div
+              style={{
+                color: "green",
+                marginBottom:
+                  "15px",
+              }}
+            >
+              {authMessage}
+            </div>
+          )}
+             {errorMessage && (
+            <div
+              style={{
+                color: "red",
+                marginBottom:
+                  "15px",
+              }}
+            >
+              {errorMessage}
+            </div>
+          )}
+
           <input
             type="email"
             placeholder="이메일"
@@ -1912,29 +1935,7 @@ const toggleMeaningVisibility = (wordId: string) => {
             </button>
           </section>
 
-          {errorMessage && (
-            <div
-              style={{
-                color: "red",
-                marginBottom:
-                  "15px",
-              }}
-            >
-              {errorMessage}
-            </div>
-          )}
-
-          {authMessage && (
-            <div
-              style={{
-                color: "green",
-                marginBottom:
-                  "15px",
-              }}
-            >
-              {authMessage}
-            </div>
-          )}
+       
 
           <section>
             <h2>내 단어장</h2>

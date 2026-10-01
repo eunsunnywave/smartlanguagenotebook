@@ -157,65 +157,92 @@ export default function Home() {
   // 중국어 → 한국어
   // 한국어 → 영어
   // =========================
-  const translateText = async (
-    value: string,
-    sourceLanguage: string
-  ): Promise<string> => {
-    const trimmedValue = value.trim();
+ const translateText = async (
+  value: string,
+  sourceLanguage: string
+): Promise<string> => {
+  const trimmedValue = value.trim();
 
-    if (!trimmedValue) {
-      return "";
-    }
+  if (!trimmedValue) {
+    return "";
+  }
 
-    // 먼저 직접 등록된 사전 확인
-    if (meaningDictionary[trimmedValue]) {
-      return meaningDictionary[trimmedValue];
-    }
+  // 직접 등록된 사전 우선
+  if (meaningDictionary[trimmedValue]) {
+    return meaningDictionary[trimmedValue];
+  }
 
-    let langPair = "";
+  let langPair = "";
 
-    if (sourceLanguage === "中文") {
-      langPair = "zh-CN|ko";
-    } else {
-      langPair = "ko|en";
-    }
+  if (sourceLanguage === "中文") {
+    langPair = "zh-CN|ko";
+  } else if (sourceLanguage === "한국어") {
+    langPair = "ko|en";
+  } else {
+    return "";
+  }
 
-    try {
-      const url =
-        `https://api.mymemory.translated.net/get?q=` +
-        `${encodeURIComponent(trimmedValue)}` +
-        `&langpair=${encodeURIComponent(langPair)}`;
+  try {
+    const url =
+      `https://api.mymemory.translated.net/get` +
+      `?q=${encodeURIComponent(trimmedValue)}` +
+      `&langpair=${encodeURIComponent(langPair)}`;
 
-      const response = await fetch(url);
+    const response = await fetch(url);
 
-      if (!response.ok) {
-        throw new Error(
-          `번역 API 오류: ${response.status}`
-        );
-      }
-
-      const data = await response.json();
-
-      const translatedText =
-        data?.responseData?.translatedText;
-
-      if (
-        typeof translatedText === "string" &&
-        translatedText.trim()
-      ) {
-        return translatedText.trim();
-      }
-
-      return "";
-    } catch (error) {
-      console.error(
-        "무료 번역 API 오류:",
-        error
+    if (!response.ok) {
+      throw new Error(
+        `번역 API 오류: ${response.status}`
       );
-
-      return "";
     }
-  };
+
+    const data = await response.json();
+
+    const translatedText =
+      data?.responseData?.translatedText;
+
+    if (
+      typeof translatedText === "string" &&
+      translatedText.trim()
+    ) {
+      return translatedText.trim();
+    }
+
+    return "";
+  } catch (error) {
+    console.error(
+      "자동 번역 오류:",
+      error
+    );
+
+    return "";
+  }
+};
+
+
+const handleAutoTranslate = async (
+  value: string
+) => {
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) {
+    setMeaning("");
+    return;
+  }
+
+  setMeaning("번역 중...");
+
+  const translated = await translateText(
+    trimmedValue,
+    language
+  );
+
+  if (translated) {
+    setMeaning(translated);
+  } else {
+    setMeaning("");
+  }
+};
 
   // =========================
   // 입력 단어 자동 번역
@@ -1312,11 +1339,7 @@ if (
   cancelEditWord();
 }
 
-setVisibleMeaningIds((prev) =>
-  prev.filter(
-    (id) => id !== wordId
-  )
-);
+
 
 };
 

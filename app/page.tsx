@@ -1306,10 +1306,18 @@ const deleteWord = async (
   ) {
     cancelEditWord();
   }
+if (
+  editingWordId === wordId
+) {
+  cancelEditWord();
+}
 
-  setMessage(
-    "단어가 삭제되었습니다."
-  );
+setVisibleMeaningIds((prev) =>
+  prev.filter(
+    (id) => id !== wordId
+  )
+);
+
 };
 
   // =========================
